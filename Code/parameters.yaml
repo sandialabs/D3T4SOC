@@ -1,0 +1,54 @@
+mode: training # training or testing
+
+# Database parameters
+database:
+  outfolder: './results/'
+  infile: '../Data/soc_all_sites_factors_genAI_WRB_groups.csv'
+  biome_type: "cropland"
+  soil_type: 1 # Phaeozems
+  outlier_cutoff: 3.0 # drop profiles with horizons outside [Q1-outlier_cutoff*IQR, Q3+outlier_cutoff*IQR]; 0: No cutoff
+  
+# Training parameters
+scaling:
+  avg_dept: [-1, 1]
+  orgc_val_1: [-1, 1]
+  lat: [-1, 1]
+  lon: [-1, 1]
+  global_coords: False              # if global_coords=True, then lat_min=-90 deg, lat_max=90 deg, lon_min=-180 deg, lon_max=180 deg
+  Annual Mean Temperature: [-1, 1]
+  Annual Precipitation: [-1, 1]
+  Elevation: [-1, 1]
+   
+validation:
+  folds: [0,2] # folds start and end (for "restart"). Only possible because of deterministic seed in shuffle and split of folds
+  test_frac: 0.3 # fraction of profiles reserved for testing
+  shuffle: True
+  seed: 65465 # Need to implement a None for truly random
+
+training:
+  learning_rate: 1e-4
+  min_learning_rate: 1e-7 # Minimum learning rate allowed
+  decrease_factor_lr: 0.5 # Decrease factor when patience is not met
+  patience_lr: 100        # Number of epochs to wait without dloss_val improvement before decreasing learning rate
+  patience_es: 1000        # Number of epochs to wait without dloss_val_smooth improvement before stopping  
+  batch_size: 0     # if batch_size=0 then batch_size = N_profiles (entire trining dataset)
+  nEpochs: 20000      # maximum number of epochs to run
+  nEval: 500          # output frequency of summary
+  nCritic: 5
+  beta: 1             # strength of the MMD penalty (distribution of samples fidelity)
+
+wgan:
+  latent_dim: 100
+  clip_value: 0.01
+  gen_hidden_units: [32,32,32]
+  disc_hidden_units: [32,32,32]
+  cond_loc_hidden_units: [32,16] # Need to implement more than 2 layers for conditions
+  cond_env_hidden_units: [32,16]
+  cond_alt_hidden_units: [32,16]
+  cond_fuse_hidden_units: [32,16]
+  
+# Testing paramers
+testing:
+  mode: W_val # Variable introduced for future implementation where epochs are obtained internally
+  epochs: [10000,10000,10000,10000,10000,10000,10000,10000,10000,10000] # same number of elements as folds -- min(rmse_val)
+  realizations: 10
